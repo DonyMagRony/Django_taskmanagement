@@ -1,14 +1,29 @@
 from django.db import models 
-
+from django.contrib.auth.models import AbstractUser 
  
+from django.conf import settings
+class User(AbstractUser): 
+    ROLE_CHOICES = [ 
 
-class User(models.Model): 
+            ('admin', 'Admin'), 
 
+            ('manager', 'Manager'), 
+
+            ('employee', 'Employee'), 
+
+        ] 
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='employee') 
     first_name = models.CharField(max_length=50) 
 
     last_name = models.CharField(max_length=50) 
 
     email = models.EmailField(unique=True) 
+
+    def save(self, *args, **kwargs):
+        # Hash the password if it's set and not hashed yet
+        if self.password and not self.password.startswith('pbkdf2_'):
+            self.set_password(self.password)
+        super().save(*args, **kwargs)
 
  
 
@@ -72,7 +87,7 @@ class Task(models.Model):
 
     priority = models.ForeignKey(Priority, on_delete=models.SET_NULL, null=True) 
 
-    assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True) 
+    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True) 
 
     due_date = models.DateField() 
 
